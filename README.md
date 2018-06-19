@@ -1,6 +1,6 @@
 # World Cup is here!
 
-This application helps to show some facts about our national soccer teams. Please find it running here: https://rodrigovaldes.shinyapps.io/Fifa/
+This application shows some facts about our national soccer teams. Please find it here: https://rodrigovaldes.shinyapps.io/Fifa/
 
 ## How to replicate?
 
