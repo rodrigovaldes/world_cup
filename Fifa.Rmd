@@ -4,7 +4,7 @@ author: "Rodrigo Valdes Ortiz"
 date: "6/16/2018"
 output:
   flexdashboard::flex_dashboard:
-    orientation: columns
+    orientation: rows
     theme: cerulean
 runtime: shiny
 ---
@@ -12,23 +12,16 @@ runtime: shiny
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(sp)
-library(shiny)
+# library(sp)
+# library(shiny)
 library(htmltools)
 library(RColorBrewer)
 library(data.table)
 library(ggplot2)
-library(ggpubr)
+# library(ggpubr)
+# library(plyr)
 
 options(digits = 3)
-set.seed(1234567)
-```
-
-```{r echo=FALSE}
-# setwd('/Users/ruy/Documents/Projects/fifa')
-
-results_all <- fread("output/results_all.csv")
-wc <- fread("output/wc.csv")
 ```
 
 ```{r echo=FALSE}
@@ -50,6 +43,82 @@ get_year <- function(df, num_compare) {
 }
 ```
 
+```{r echo=FALSE}
+resultsAll <- reactive({
+  results_all <- fread("output/results_all.csv")
+  
+})
+```
+
+```{r echo=FALSE}
+wC_r <- reactive({
+  wc <- fread("output/wc.csv")
+})
+
+```
+
+
+```{r echo=FALSE}
+dataData <- reactive({
+  results_all = resultsAll()
+  # Filter one country
+  data1 = results_all[results_all$one == input$country,]
+
+  # Filter by tournament
+  data2 = data1[data1$tournament == 'FIFA World Cup',]
+})
+
+```
+
+```{r echo=FALSE}
+dataDf <- reactive({
+
+  data = dataData()
+  wc = wC_r()
+  # Count per year
+  num_play = data.frame(table(data$year))
+  names(num_play) <- c("year", "matches")
+
+  # Total number of win games
+  num_win = aggregate(. ~ year, data[,c("score_1","score_2","win", "year")], sum)
+
+  # Merge total num_play with num_win
+  num = merge(x = num_win, y = num_play, by = "year")
+
+  # Create lethality ratio
+  num$letality = num$score_1/num$score_2
+  num$win_proportion = num$win/num$matches
+
+  # Create DF which includes all the years of World Cups
+  df = merge(x = num, y = wc, by = "year", all.y = TRUE)
+  # df[is.na(df)] <- 0
+  df$year = as.character(df$year)
+  # Column of Color
+  col_col = c(rep(brewer.pal(9,"Set1"),times=2), brewer.pal(3,"Set1")[1:2])
+  df2 = cbind(df, col_col)
+})
+```
+
+```{r echo=FALSE}
+dataLong <- reactive({
+  df = dataDf()
+
+  # Total number Vs. Total played
+  df$match_g = df$matches - df$win
+  part_1 = df[,c("year", "win")]
+  names(part_1) <- c("year", "n_graph")
+  part_1$control = c("Win")
+
+  part_2 = df[,c("year", "match_g")]
+  names(part_2) <- c("year", "n_graph")
+  part_2$control = c("Matches")
+
+  df_long1 <- rbind(part_1, part_2)
+  df_long2 <- df_long1[order(df_long1$year), ]
+
+})
+```
+
 Graphs
 =====================================  
 
@@ -69,160 +138,135 @@ selectInput("country", label = "Country:",
                         'United Arab Emirates', 'Uruguay', 'Wales', 'Yugoslavia'), selected = "Mexico")
 ```
 
+
+<p align=center><font size=5.5>
+
+<b> The World Cup is here again! </b>
+
+</font>
+
+
+<p align=justify><font size=4.8>
+
+Let's review some interesting facts about our teams in all World Cups' history. 
+
+1) The total number of matches of your team in all world cups.
+
+2) Lethality index = scored goals / received goals. A number above one indicates that your team scores more goals than it receives. 
+
+3) The matches of the world cup with the highest lethality index.
+
+4) The matches of the world cup with the lowest lethality index.
+
+</font></p>
+
+&emsp;
+
+<p>
+
+The code and files are available here:
+https://github.com/rodrigovaldes/world_cup
+
+All data was compiled by Ágoston Török, available here, https://www.kaggle.com/agostontorok/soccer-world-cup-2018-winner/data
+</p>
+
+
+
+Row
+-------------------------------------
+
+### 1) Played and Won Games
+
 ```{r echo=FALSE}
-dataData <- reactive({
-  # Filter one country
-  data1 = results_all[results_all$one == input$country,]
-  
-  # Filter by tournament
-  data2 = data1[data1$tournament == 'FIFA World Cup',]
+renderPlot({
+  df_long = dataLong()
+
+  ggplot(data=df_long,aes(x=year, y=n_graph, fill=control)) +
+    geom_bar(stat="identity",position ="stack") +
+    blank_theme +
+    labs(y = "Games", fill = " ") +
+    theme(axis.text.x = element_text(face = 'bold', size = 12, angle = 90, vjust = 0.5),
+      axis.text.y = element_text(size = 12, face = 'bold'),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(colour="grey20",size=14,face="bold"),
+      legend.text = element_text(size = 13), 
+      legend.position = "top") +
+      scale_fill_manual(values=c('dodgerblue2','firebrick4')) +
+      scale_color_manual(values=c('dodgerblue2','firebrick4'))
 })
-
-```
-
-```{r echo=FALSE}
-dataDf <- reactive({
-  
-  data = dataData()
-  # Count per year
-  num_play = data.frame(table(data$year))
-  names(num_play) <- c("year", "matches")
-  
-  # Total number of win games
-  num_win = aggregate(. ~ year, data[,c("score_1","score_2","win", "year")], sum)
-  
-  # Merge total num_play with num_win
-  num = merge(x = num_win, y = num_play, by = "year")
-  
-  # Create letality ratio 
-  num$letality = num$score_1/num$score_2
-  num$win_proportion = num$win/num$matches
-  
-  # Create DF which includes all the years of World Cups
-  df = merge(x = num, y = wc, by = "year", all.y = TRUE)
-  # df[is.na(df)] <- 0
-  df$year = as.character(df$year)
-  # Column of Color
-  col_col = c(rep(brewer.pal(9,"Set1"),times=2), brewer.pal(3,"Set1")[1:2])
-  df2 = cbind(df, col_col)
-})
-```
-
-```{r echo=FALSE}
-# dataLong <- reactive({
-#   df = dataDf()
-# 
-#   # Total number Vs. Total played
-#   df$match_g = df$matches - df$win
-#   part_1 = df[,c("year", "win")]
-#   names(part_1) <- c("year", "n_graph")
-#   part_1$control = c("Win")
-# 
-#   part_2 = df[,c("year", "match_g")]
-#   names(part_2) <- c("year", "n_graph")
-#   part_2$control = c("Matches")
-# 
-#   df_long1 <- rbind(part_1, part_2)
-#   df_long2 <- df_long1[order(df_long1$year), ]
-#   
-# })
 ```
 
 Row
 -------------------------------------
 
-### Letality Index (Scored Goals / Received Goals)
+### 2) Lethality Index (Scored Goals / Received Goals)
 
 ```{r echo=FALSE}
-# Graph Letality Index an all World Cups
+# Graph Lethality Index an all World Cups
 renderPlot({
   df = dataDf()
   col_col2 = c(rep(brewer.pal(9,"Set1"),times=2), brewer.pal(3,"Set1")[1:2])
-  
+
   ggplot(data=df, aes(x=year, y=letality, fill=col_col)) +
   geom_bar(stat="identity")+
   blank_theme +
   scale_fill_manual("legend", values = col_col2) +
-  labs(y = "Letality Index") +
+  labs(y = "Lethality Index") +
   theme(axis.text.x = element_text(face = 'bold', size = 12, angle = 90, vjust = 0.5),
-        axis.text.y = element_text(size = 12),
+        axis.text.y = element_text(size = 12, face = 'bold'),
         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_text(colour="grey20",size=12,face="bold")) +
+        axis.title.y = element_text(colour="grey20",size=14,face="bold")) +
   scale_x_discrete(breaks = df$year, labels = as.character(df$year))
-  
+
 })
 ```
 
-### Played and Won Games
+
+### 3) Games of the World Cup with the highest Lethality Index
 
 ```{r echo=FALSE}
-# renderPlot({
-#   df_long = dataLong()
-# 
-#   ggplot(data=df_long,aes(x=year, y=n_graph, fill=control)) +
-#     geom_bar(stat="identity",position ="stack") +
-#     blank_theme +
-#     labs(y = "Games", fill = " ") +
-#     theme(axis.text.x = element_text(face = 'bold', size = 12, angle = 90, vjust = 0.5),
-#       axis.text.y = element_text(size = 12),
-#       axis.title.x = element_blank(),
-#       axis.title.y = element_text(colour="grey20",size=12,face="bold"),
-#       legend.position = "top") +
-#       scale_fill_manual(values=c('dodgerblue2','firebrick4')) +
-#       scale_color_manual(values=c('dodgerblue2','firebrick4'))
-# })
-```
+# Print games of the best and worst World Cup
+# Get the best lethality index
 
-Row
--------------------------------------
+renderPrint({
+  data = dataData()
+  df = dataDf()
+  max_let = max(df$letality[!is.na(df$letality)])
 
-### Games of the World Cup with the highest Letality Index
+  # Year of the best World Cup for that country
+  aux = get_year(df, max_let)
 
-```{r echo=FALSE}
-# # Print games of the best and worst World Cup
-# # Get the best letality index
-# 
-# renderPrint({
-#   data = dataData()
-#   df = dataDf()
-#   max_let = max(df$letality[!is.na(df$letality)])
-#   
-#   # Year of the best World Cup for that country
-#   aux = get_year(df, max_let)
-#   
-#   # Games
-#   best_games = data[,c("date", "two", "score_1", "score_2")][which(data$year == aux),]
-#   names(best_games) <- c("Date", "Rival", "Goals!", "Goals Rival")
-#   
-#   print(best_games)
-#   
-# })
+  # Games
+  best_games = data[,c("date", "two", "score_1", "score_2")][which(data$year == aux),]
+  names(best_games) <- c("Date", "Rival", "Goals!", "Goals Rival")
+
+  print(best_games)
+
+})
 
 ```
 
-### Games of the World Cup with the lowest Letality Index
+### 4) Games of the World Cup with the lowest Lethality Index
 
 ```{r echo=FALSE}
-# Get the worst letality index
-# 
-# renderPrint({
-#   data = dataData()
-#   df = dataDf()
-#   
-#   min_let = min(df$letality[!is.na(df$letality)])
-# 
-#   # Year of the worst World Cup for that country
-#   aux_2 = get_year(df, min_let)
-#   
-#   # Games
-#   worst_games = data[,c("date", "two", "score_1", "score_2")][which(data$year == aux_2),]
-#   names(worst_games) <- c("Date", "Rival", "Goals!", "Goals Rival")
-#   
-#   print(worst_games)
-# })
+# Get the worst lethality index
 
+renderPrint({
+  data = dataData()
+  df = dataDf()
+
+  min_let = min(df$letality[!is.na(df$letality)])
+
+  # Year of the worst World Cup for that country
+  aux_2 = get_year(df, min_let)
+
+  # Games
+  worst_games = data[,c("date", "two", "score_1", "score_2")][which(data$year == aux_2),]
+  names(worst_games) <- c("Date", "Rival", "Goals!", "Goals Rival")
+
+  print(worst_games)
+})
 ```
-
 
 
