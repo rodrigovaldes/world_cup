@@ -1,7 +1,7 @@
 ---
 title: "Fifa"
 author: "Rodrigo Valdes Ortiz"
-date: "6/16/2018"
+date: "2018"
 output:
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -12,17 +12,19 @@ runtime: shiny
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-# library(sp)
 # library(shiny)
 library(htmltools)
 library(RColorBrewer)
 library(data.table)
 library(ggplot2)
-# library(ggpubr)
-# library(plyr)
+
+# library(shinythemes)
+
+# fluidPage(theme = shinytheme("cerulean"))
 
 options(digits = 3)
 ```
+
 
 ```{r echo=FALSE}
 # Main theme
@@ -119,7 +121,7 @@ dataLong <- reactive({
 })
 ```
 
-Graphs
+Your team: 1930 - 2014
 =====================================  
 
 Inputs {.sidebar}
@@ -136,8 +138,10 @@ selectInput("country", label = "Country:",
                         'Peru', 'Poland', 'Portugal', 'Romania', 'Russia', 'Saudi Arabia', 'Scotland', 'Senegal', 'Serbia', 'Slovakia', 'Slovenia', 
                         'South Africa', 'Spain', 'Sweden', 'Switzerland', 'Togo', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'USA', 'Ukraine', 
                         'United Arab Emirates', 'Uruguay', 'Wales', 'Yugoslavia'), selected = "Mexico")
-```
 
+# tags$head(tags$style(HTML(".selectize-input {height: 100px; width: 500px; font-size: 100px;}")))
+
+```
 
 <p align=center><font size=5.5>
 
