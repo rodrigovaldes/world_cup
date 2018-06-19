@@ -2,6 +2,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+'''
+-------------------------------------------------------------------------------
+This part of the code is not neccesary for the final product.
+
+This is an exploratory file. I replicate most of this inside the code in R
+-------------------------------------------------------------------------------
+'''
+
 def only_tournament(df, t = ['FIFA World Cup']):
 
     mask = df['tournament'].isin(t)
@@ -33,37 +41,3 @@ num_win = subset1_all.groupby(['year']).sum()
 num = num_play.merge(num_win, left_index=True, right_index=True)
 num['letality'] = num['score_1'] / num['score_2']
 num['win_proportion'] = num['win'] / num['matches']
-
-num.plot.bar(y='win_proportion')
-num.plot.bar(y='letality')
-
-
-### ONLY ONE SIDE ###
-mask1 = results['home_team'] == 'Mexico'
-subset1 = results[mask1]
-subset1 = difference(subset1)
-subset1 = only_tournament(subset1, ['FIFA World Cup qualification',
-    'FIFA World Cup'])
-subset1.plot.line(y='difference', x = 'date')
-
-subset1.rolling(4, win_type='triang').mean().plot.line(y='difference',
-    x = 'date')
-
-subset1.groupby('year').sum()
-
-# Letality index (scores vs other score) -->
-# Number of Games played -->
-# Number of games won
-# Number of games lost
-# Ratio won / lost
-
-
-
-mask2 = results['away_team'] == 'Mexico'
-subset2 = results[mask2]
-
-
-
-
-# mask = (results['home_team'] == 'Mexico') | (results['away_team'] == 'Mexico')
-# set(results['tournament'])

@@ -2,6 +2,10 @@ import pandas as pd
 import numpy as np
 import os
 
+'''
+This file creates the inputs for Fifa.Rmd file
+'''
+
 dateparse = lambda x: pd.datetime.strptime(x, '%Y-%m-%d')
 results = pd.read_csv("data/results.csv", parse_dates=['date'],
     date_parser=dateparse)
