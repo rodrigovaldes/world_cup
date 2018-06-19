@@ -46,11 +46,21 @@ get_year <- function(df, num_compare) {
 ```
 
 ```{r echo=FALSE}
+get_date <- function(df, num_compare) {
+  aux1 = df[df$let_game==num_compare, ]
+  aux2 = aux1[complete.cases(aux1), ]
+  aux3 = as.integer(aux2$date)[1]
+}
+```
+
+
+```{r echo=FALSE}
 resultsAll <- reactive({
   results_all <- fread("output/results_all.csv")
   
 })
 ```
+
 
 ```{r echo=FALSE}
 wC_r <- reactive({
@@ -68,6 +78,10 @@ dataData <- reactive({
 
   # Filter by tournament
   data2 = data1[data1$tournament == 'FIFA World Cup',]
+  
+  # Lethality per game
+  data2$let_game = data2$score_1 - data2$score_2
+
 })
 
 ```
@@ -88,7 +102,7 @@ dataDf <- reactive({
   num = merge(x = num_win, y = num_play, by = "year")
 
   # Create lethality ratio
-  num$letality = num$score_1/num$score_2
+  num$letality = num$score_1 - num$score_2
   num$win_proportion = num$win/num$matches
 
   # Create DF which includes all the years of World Cups
@@ -156,11 +170,11 @@ Let's review some interesting facts about our teams in all World Cups' history.
 
 1) The total number of matches of your team in all world cups.
 
-2) Lethality index = scored goals / received goals. A number above one indicates that your team scores more goals than it receives. 
+2) Goal Average = scored goals - received goals. A number above one indicates that your team scores more goals than it receives. 
 
-3) The matches of the world cup with the highest lethality index.
+3) The matches of the world cup with the highest Goal Average.
 
-4) The matches of the world cup with the lowest lethality index.
+4) The matches of the world cup with the lowest Goal Average.
 
 </font></p>
 
@@ -203,7 +217,7 @@ renderPlot({
 Row
 -------------------------------------
 
-### 2) Lethality Index (Scored Goals / Received Goals)
+### 2) Goal Average (Scored Goals - Received Goals)
 
 ```{r echo=FALSE}
 # Graph Lethality Index an all World Cups
@@ -215,7 +229,7 @@ renderPlot({
   geom_bar(stat="identity")+
   blank_theme +
   scale_fill_manual("legend", values = col_col2) +
-  labs(y = "Lethality Index") +
+  labs(y = "Goal Average") +
   theme(axis.text.x = element_text(face = 'bold', size = 12, angle = 90, vjust = 0.5),
         axis.text.y = element_text(size = 12, face = 'bold'),
         legend.position = "none",
@@ -227,7 +241,7 @@ renderPlot({
 ```
 
 
-### 3) Games of the World Cup with the highest Lethality Index
+### 3) Games of the World Cup with the highest Goal Average
 
 ```{r echo=FALSE}
 # Print games of the best and worst World Cup
@@ -251,7 +265,31 @@ renderPrint({
 
 ```
 
-### 4) Games of the World Cup with the lowest Lethality Index
+### 4) Testing
+
+```{r}
+# Max lethality all times
+# 
+# renderPrint({
+#   data = dataData()
+#   
+#   # Get the lethality index of the best game
+#   max_game = max(data$let_game[!is.na(data$let_game)])
+#   
+#   # Date of the best match
+#   aux_game = get_date(df, max_game)
+#   
+#   # Game
+#   best_game = data[,c("date", "two", "score_1", "score_2")][which(data$date == aux_game),]
+#   names(best_game) <- c("Date", "Rival", "Goals!", "Goals Rival")
+#   
+#   print(best_game)
+# })
+
+```
+
+
+### 5) Games of the World Cup with the lowest Goal Average
 
 ```{r echo=FALSE}
 # Get the worst lethality index
