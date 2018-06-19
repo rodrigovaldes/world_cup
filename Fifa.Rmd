@@ -49,7 +49,7 @@ get_year <- function(df, num_compare) {
 get_date <- function(df, num_compare) {
   aux1 = df[df$let_game==num_compare, ]
   aux2 = aux1[complete.cases(aux1), ]
-  aux3 = as.integer(aux2$date)[1]
+  aux3 = as.integer(aux2$let_game)[1]
 }
 ```
 
@@ -79,9 +79,6 @@ dataData <- reactive({
   # Filter by tournament
   data2 = data1[data1$tournament == 'FIFA World Cup',]
   
-  # Lethality per game
-  data2$let_game = data2$score_1 - data2$score_2
-
 })
 
 ```
@@ -157,24 +154,30 @@ selectInput("country", label = "Country:",
 
 ```
 
-<p align=center><font size=5.5>
+<p align=center><font size=5.2>
 
 <b> The World Cup is here again! </b>
 
 </font>
 
 
-<p align=justify><font size=4.8>
+<p align=justify><font size=4.3>
 
 Let's review some interesting facts about our teams in all World Cups' history. 
 
-1) The total number of matches of your team in all world cups.
+1) The total number of matches and won games.
 
-2) Goal Average = scored goals - received goals. A number above one indicates that your team scores more goals than it receives. 
+2) Goal Average = scored goals - received goals. Then, positive is good. 
 
-3) The matches of the world cup with the highest Goal Average.
+**Games according to Goal Average**
 
-4) The matches of the world cup with the lowest Goal Average.
+3) Matches of the best world cup.
+
+4) BEST game EVER!
+
+5) Matches of the worst world cup.
+
+6) Worst game EVER!
 
 </font></p>
 
@@ -214,9 +217,6 @@ renderPlot({
 })
 ```
 
-Row
--------------------------------------
-
 ### 2) Goal Average (Scored Goals - Received Goals)
 
 ```{r echo=FALSE}
@@ -240,8 +240,10 @@ renderPlot({
 })
 ```
 
+Row
+-------------------------------------
 
-### 3) Games of the World Cup with the highest Goal Average
+### 3) World Cup with the highest Goal Average
 
 ```{r echo=FALSE}
 # Print games of the best and worst World Cup
@@ -265,31 +267,33 @@ renderPrint({
 
 ```
 
-### 4) Testing
+### 4) BEST game EVER!
 
-```{r}
+```{r echo=FALSE}
 # Max lethality all times
-# 
-# renderPrint({
-#   data = dataData()
-#   
-#   # Get the lethality index of the best game
-#   max_game = max(data$let_game[!is.na(data$let_game)])
-#   
-#   # Date of the best match
-#   aux_game = get_date(df, max_game)
-#   
-#   # Game
-#   best_game = data[,c("date", "two", "score_1", "score_2")][which(data$date == aux_game),]
-#   names(best_game) <- c("Date", "Rival", "Goals!", "Goals Rival")
-#   
-#   print(best_game)
-# })
+
+renderPrint({
+  da = dataData()
+
+  # Lethality per game
+  da$let_game = da$score_1 - da$score_2
+
+  # Get the lethality index of the best game
+  max_game = max(da$let_game[!is.na(da$let_game)])
+
+  # Date of the best match
+  aux_game = get_date(da, max_game)
+
+  # Game
+  best_game = da[,c("date", "two", "score_1", "score_2")][which(da$let_game == aux_game),]
+  names(best_game) <- c("Date", "Rival", "Goals!", "Goals Rival")
+
+  print(best_game)
+})
 
 ```
 
-
-### 5) Games of the World Cup with the lowest Goal Average
+### 5) World Cup with the lowest Goal Average
 
 ```{r echo=FALSE}
 # Get the worst lethality index
@@ -311,4 +315,28 @@ renderPrint({
 })
 ```
 
+### 6) Worst game EVER!
 
+```{r echo=FALSE}
+# Max lethality all times
+
+renderPrint({
+  da = dataData()
+
+  # Lethality per game
+  da$let_game = da$score_1 - da$score_2
+
+  # Get the lethality index of the best game
+  min_game = min(da$let_game[!is.na(da$let_game)])
+
+  # Date of the best match
+  aux_game = get_date(da, min_game)
+
+  # Game
+  worst_game = da[,c("date", "two", "score_1", "score_2")][which(da$let_game == aux_game),]
+  names(worst_game) <- c("Date", "Rival", "Goals!", "Goals Rival")
+
+  print(worst_game)
+})
+
+```
